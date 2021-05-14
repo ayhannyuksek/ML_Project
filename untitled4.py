@@ -29,19 +29,21 @@ def NumberofValue(column, value):
     
         if i == value:
             count = count + 1
-   # print(count)    
+    print(count)    
 
-#print(dataset)
+  
 #drop 'encounter_id','patient_nbr' column
 dataset.drop(["encounter_id","patient_nbr"],axis=1,inplace=True)
 
 
 #Race'i belli olmayan hastaları sildik.
+NumberofValue("race", "?")
 dataset = dataset.loc[dataset["race"] != "?"]
 NumberofValue("race", "?")
 
 
 #Genderdan Unknown/Invalid değerini temizledim.
+NumberofValue("gender", "Unknown/Invalid")
 dataset = dataset.loc[dataset["gender"] != "Unknown/Invalid"]
 NumberofValue("gender", "Unknown/Invalid")
 
@@ -128,19 +130,22 @@ dataset["admission_source_id"] = dataset["admission_source_id"].replace(mapped_a
 #print(dataset["admission_source_id"].value_counts())
 dataset= dataset.dropna()
 
-#one hot encoding
-dataset = pd.get_dummies(dataset,columns = [dataset.columns.values[i] 
-                                            for i in range(17,38) ], prefix=[dataset.columns.values[i] 
-                                            for i in range(17,38)], prefix_sep='_',drop_first=True) 
+
 
 
 
 #DATA ENCODING
 
+
+
+#one hot encoding
+dataset = pd.get_dummies(dataset,columns = [dataset.columns.values[i] 
+                                            for i in range(17,38) ], prefix=[dataset.columns.values[i] 
+                                            for i in range(17,38)], prefix_sep='_',drop_first=True) 
+
 #race
 #print(dataset["race"].value_counts())
 mapped_race = {"Caucasian":0,"AfricanAmerican":1, "Hispanic":2, "Other":3, "Asian":4 }
-
 dataset["race"] = dataset["race"].replace(mapped_race)
 
 #gender
@@ -148,7 +153,6 @@ dataset["race"] = dataset["race"].replace(mapped_race)
 #print(dataset["gender"].value_counts())
 
 mapped_gender = {"Male":0,"Female":1}
-
 dataset["gender"] = dataset["gender"].replace(mapped_gender)
 
 
@@ -157,7 +161,6 @@ dataset["gender"] = dataset["gender"].replace(mapped_gender)
 #print(dataset["admission_type_id"].value_counts())
 
 mapped_admission_id = {"Emergency":0, "Elective":1, "New Born":2, "Trauma Center":3}
-
 dataset["admission_type_id"] = dataset["admission_type_id"].replace(mapped_admission_id)
 
 
@@ -166,7 +169,6 @@ dataset["admission_type_id"] = dataset["admission_type_id"].replace(mapped_admis
 #print(dataset["discharge_disposition_id"].value_counts())
 
 mapped_discharge = {"Discharged to Home":0, "Other":1}
-
 dataset["discharge_disposition_id"] = dataset["discharge_disposition_id"].replace(mapped_discharge)
 
 
@@ -174,7 +176,6 @@ dataset["discharge_disposition_id"] = dataset["discharge_disposition_id"].replac
 #print(dataset["admission_source_id"].value_counts())
 
 mapped_source = {"Referral":0, "Emergency":1, "Other":2}
-
 dataset["admission_source_id"] = dataset["admission_source_id"].replace(mapped_source)
 
 
@@ -254,6 +255,7 @@ ros = RandomUnderSampler(random_state=0)
 X, y = ros.fit_resample(X, y)
 print(X.shape, y.shape)
 print(" ")
+
 #train split yapıyoruz
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
 
@@ -276,8 +278,7 @@ print("{} Accuracy: %".format("ROC"), roc_auc_score(y_test, KNN_pred) * 100)
 #GBC classifier
 print("\nGBC classifier")
 
-GBC = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1,
-    max_depth=7, random_state=0).fit(X_train, y_train)
+GBC = GradientBoostingClassifier(n_estimators=100, learning_rate=0.1).fit(X_train, y_train)
 GBC_pred = GBC.predict(X_test)
 
 print("{} Accuracy: %".format("ROC"), roc_auc_score(y_test, GBC_pred) * 100)
@@ -291,16 +292,24 @@ LOG_pred = LOG.predict(X_test)
 
 print("{} Accuracy: %".format("ROC"), roc_auc_score(y_test, LOG_pred) * 100)
 
+import seaborn as sns
+import matplotlib.pyplot as plt
+x=dataset['readmitted'].value_counts().values
+sns.barplot([0,1],x)
+plt.title('Readmitted variable count before undersampling')
 
 
 
+plt.figure(figsize=(14, 7))
+ax = plt.subplot(111)
 
-
-
-
-
-
-
+models = ['Logistic Regression', 'Random Forests',"KNN Classifier","G.Boosting" ]
+values = [roc_auc_score(y_test, LOG_pred) * 100,roc_auc_score(y_test, RFC_pred) * 100, roc_auc_score(y_test, KNN_pred) * 100,
+         roc_auc_score(y_test, GBC_pred) * 100 ]
+model = np.arange(len(models))
+plt.title('Comparison of Learning Algorithms with Undersampling')
+plt.bar(model, values, align='center', width = 0.15, alpha=0.7, color = 'red', label= 'ROC score')
+plt.xticks(model, models)
 
 
 
